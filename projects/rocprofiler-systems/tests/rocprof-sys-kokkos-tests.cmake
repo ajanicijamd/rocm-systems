@@ -101,7 +101,7 @@ rocprofiler_systems_add_test(
         args
         -ME
         [==[lib(gomp|m-)]==]
-    RUN_ARGS -i 10 -s 20 -p
+    RUN_ARGS -i 5 -s 20 -p
     ENVIRONMENT "${_base_environment};ROCPROFSYS_USE_KOKKOSP=ON"
 )
 

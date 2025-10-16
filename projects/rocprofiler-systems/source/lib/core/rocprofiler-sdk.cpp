@@ -283,8 +283,8 @@ config_settings(const std::shared_ptr<settings>& _config)
             JOIN('_', "ROCPROFSYS_ROCM", _domain_name, "OPERATIONS_ANNOTATE_BACKTRACE");
 
         auto _op_choices = std::vector<std::string>{};
-        for(auto itr : _domain.operations)
-            _op_choices.emplace_back(std::string{ itr });
+        for(auto itr_internal : _domain.operations)
+            _op_choices.emplace_back(std::string{ itr_internal  });
 
         if(_op_choices.empty()) return;
 

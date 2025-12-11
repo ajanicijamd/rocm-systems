@@ -32,6 +32,7 @@
 #include "core/trace_cache/sample_type.hpp"
 #include <amd_smi/amdsmi.h>
 #include <cstdint>
+#include <list>
 #if defined(NDEBUG)
 #    undef NDEBUG
 #endif
@@ -861,6 +862,43 @@ data::post_process(uint32_t _dev_id)
 
 //--------------------------------------------------------------------------------------//
 
+// Parse a comma-separated list of strings.
+static std::list<std::string> parse_list(const std::string& nic_str) {
+    std::list<std::string> list {};
+    std::string current {""};
+    for (auto& ch : nic_str) {
+        if (ch == ',') {
+            if (current.size() > 0) {
+                list.push_back(current);
+                current = "";
+            }
+            continue;
+        }
+        current += ch;
+    }
+    if (current.size() > 0) {
+        list.push_back(current);
+    }
+    return list;
+}
+
+std::list<std::string> data::nic_list = {};
+AINICStatsCollector data::nic_stats_collector;
+
+void
+setup_ainic()
+{
+#ifdef USE_AINIC
+
+    auto _ainic_devices_v = get_sampling_ainics();
+    data::nic_list = parse_list(_ainic_devices_v);
+
+    // Run get_stats() the first time, to get the names of all existing NICs.
+    data::nic_stats_collector.get_stats();
+
+#endif
+}
+
 void
 setup()
 {
@@ -884,6 +922,7 @@ setup()
     data::device_count = gpu::device_count();
 
     auto _devices_v = get_sampling_gpus();
+
     for(auto& itr : _devices_v)
         itr = tolower(itr);
     if(_devices_v == "off")
@@ -974,6 +1013,8 @@ setup()
                 }
             }
         }
+
+        setup_ainic();
 
         is_initialized() = true;
         data::setup();

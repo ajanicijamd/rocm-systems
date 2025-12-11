@@ -38,6 +38,10 @@
 #    include <amd_smi/amdsmi.h>
 #endif
 
+#if ROCPROFSYS_USE_AINIC > 0
+#    define USE_AINIC
+#endif
+
 #include <chrono>
 #include <cstdint>
 #include <deque>
@@ -48,6 +52,10 @@
 #include <thread>
 #include <tuple>
 #include <type_traits>
+
+#ifdef USE_AINIC
+#    include "ainic_stats.hpp"
+#endif
 
 namespace rocprofsys
 {
@@ -129,6 +137,7 @@ struct data
 
 private:
     friend void rocprofsys::amd_smi::setup();
+    friend void setup_ainic();
     friend void rocprofsys::amd_smi::config();
     friend void rocprofsys::amd_smi::sample();
     friend void rocprofsys::amd_smi::shutdown();
@@ -141,6 +150,12 @@ private:
     static std::unique_ptr<std::thread>& get_thread();
     static bool                          setup();
     static bool                          shutdown();
+
+#ifdef USE_AINIC
+    static std::list<std::string> nic_list;
+    static AINICStatsCollector    nic_stats_collector;
+#endif
+
 };
 
 #if !defined(ROCPROFSYS_USE_ROCM) || ROCPROFSYS_USE_ROCM == 0

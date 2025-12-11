@@ -30,8 +30,7 @@ const nic_params_t& AINICStatsCollector::params() {
 
 AINICStatsCollector::AINICStatsCollector() :
     _amdsmi(amd::smi::AMDSmiSystem::getInstance())
-{
-}
+{ }
 
 NICData& AINICStatsCollector::get_data(const std::string& nic) {
     // Check if nic maps to a data object, and if it does, return that object.

@@ -502,10 +502,9 @@ configure_settings(bool _init)
 
     ROCPROFSYS_CONFIG_SETTING(
         std::string, "ROCPROFSYS_SAMPLING_AINICS",
-        "AI NICs to query when ROCPROFSYS_USE_AMD_SMI=ON. Values should be separated by "
-        "commas and can be explicit or ranges, e.g. 0,1,5-8. An empty value implies "
-        "'all' and 'none' suppresses all AI NIC sampling",
-        std::string{ "all" }, "amd_smi", "rocm", "process_sampling");
+        "AI NICs to query when ROCPROFSYS_USE_AMD_SMI=ON. NIC names should be separated by "
+        "commas, e.g. eno8303,enp7s0.",
+        std::string{ "" }, "amd_smi", "rocm", "process_sampling");
 
     ROCPROFSYS_CONFIG_SETTING(
         std::string, "ROCPROFSYS_SAMPLING_TIDS",

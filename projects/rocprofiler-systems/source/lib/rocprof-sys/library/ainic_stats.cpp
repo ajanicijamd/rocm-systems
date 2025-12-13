@@ -46,6 +46,16 @@ NICData& AINICStatsCollector::get_data(const std::string& nic) {
     return pair->second;
 }
 
+bool AINICStatsCollector::find_nic(const std::string& nic, NICData& data) {
+    auto pair = _nic_params.find(nic);
+    if (pair == _nic_params.end())
+    {
+        return false;
+    }
+    data = pair->second;
+    return true;
+}
+
 void AINICStatsCollector::get_stats() {
     amdsmi_status_t status;
     const std::vector<amdsmi_ai_nic_info_t>& ai_nic_infos(_amdsmi.get_ai_nic_info());

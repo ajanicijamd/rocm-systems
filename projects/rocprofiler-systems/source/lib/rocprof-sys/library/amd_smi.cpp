@@ -154,6 +154,16 @@ metadata_initialize_smi_tracks(size_t gpu_id)
 }
 
 void
+metadata_initialize_ainic_smi_tracks(const std::string& nic)
+{
+    const auto thread_id = std::nullopt;
+
+    trace_cache::get_metadata_registry().add_track(
+        { trace_cache::info::annotate_with_nic<category::amd_smi_ainic_rx_cnp>(nic),
+          thread_id, "{}" });
+}
+
+void
 metadata_initialize_smi_pmc(size_t gpu_id)
 {
     // TODO: Find the proper values for a following definitions
@@ -274,6 +284,26 @@ metadata_initialize_smi_pmc(size_t gpu_id)
             add_jpeg_pmc(xcp);
         }
     }
+}
+
+void
+metadata_initialize_ainic_smi_pmc(const std::string& nic)
+{
+    size_t      EVENT_CODE       = 0;
+    size_t      INSTANCE_ID      = 0;
+    const char* LONG_DESCRIPTION = "";
+    const char* COMPONENT        = "";
+    const char* BLOCK            = "";
+    const char* EXPRESSION       = "";
+    auto        ni               = node_info::get_instance();
+    const char* TARGET_ARCH      = "NIC";
+
+    trace_cache::get_metadata_registry().add_pmc_info(
+        { agent_type::NIC, std::hash<std::string>{}(nic), TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+          trait::name<category::amd_smi_ainic_rx_cnp>::value, "NIC RX CNP PKTS",
+          trait::name<category::amd_smi_ainic_rx_cnp>::description, LONG_DESCRIPTION,
+          COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
+          EXPRESSION, 0, 0, "{}" });
 }
 
 auto&
@@ -596,6 +626,14 @@ config()
         metadata_initialize_smi_tracks(_dev_id);
         metadata_initialize_smi_pmc(_dev_id);
     }
+
+    for (const auto& nic : data::nic_list)
+    {
+        metadata_initialize_ainic_smi_tracks(nic);
+        metadata_initialize_ainic_smi_pmc(nic);
+    }
+
+    amd_smi::set_state(State::Active);
 }
 
 void
@@ -611,7 +649,9 @@ sample()
         if(amd_smi::get_state() != State::Active) continue;
         ROCPROFSYS_DEBUG_F("Polling amd-smi for device %u...\n", itr);
         auto& _data = *_bundle_data.at(itr);
+
         if(!_data) continue;
+
         _data->emplace_back(data{ itr });
         ROCPROFSYS_DEBUG_F("    %s\n", TIMEMORY_JOIN("", _data->back()).c_str());
     }
@@ -941,6 +981,7 @@ setup()
     {
         for(uint32_t i = 0; i < data::device_count; ++i)
             _emplace(i);
+
     }
     else if(!_no_devices)
     {

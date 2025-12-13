@@ -42,7 +42,13 @@ private:
     NICData& get_data(const std::string& nic);
 public:
     AINICStatsCollector();
+
+    // Update the statistics for all NICs.
     void get_stats();
 
     const nic_params_t& params();
+
+    // Find nic and fill in the data.
+    // If the nic is not found, return false.
+    bool find_nic(const std::string& nic, NICData& data);
 };

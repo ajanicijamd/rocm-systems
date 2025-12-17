@@ -37,10 +37,11 @@ private:
     amd::smi::AMDSmiSystem& _amdsmi; // Reference to the singleton instance of AMDSmiSystem
     nic_params_t _nic_params; // Mapping NIC name -> NIC statistics
 
+public:
     // Return reference to data associated with the specified NIC.
     // If the data for nic don't exist yet, create them.
     NICData& get_data(const std::string& nic);
-public:
+
     AINICStatsCollector();
 
     // Update the statistics for all NICs.

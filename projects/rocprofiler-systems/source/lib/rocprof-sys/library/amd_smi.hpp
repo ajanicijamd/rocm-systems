@@ -65,6 +65,9 @@ void
 setup();
 
 void
+setup_ainic();
+
+void
 config();
 
 void
@@ -159,15 +162,21 @@ private:
 
 struct nic_data
 {
-    void sample(const std::string& nic);
+public:
+    explicit nic_data(const std::string& nic);
+
+    static std::vector<nic_data>& get_initial();
+    static std::list<std::string> nic_list;
+    const std::string& get_nic() const;
+
+    void sample();
 
     static void post_process(const std::string& nic);
 
-#ifdef USE_AINIC
-    static std::list<std::string> nic_list;
     static AINICStatsCollector    nic_stats_collector;
-#endif
 
+private:
+    std::string _nic;
 };
 
 #endif

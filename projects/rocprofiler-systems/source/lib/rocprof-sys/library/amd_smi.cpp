@@ -474,6 +474,11 @@ std::unique_ptr<data::promise_t> data::polling_finished = {};
 
 data::data(uint32_t _dev_id) { sample(_dev_id); }
 
+nic_data::nic_data(const std::string& nic)
+    : _nic(nic)
+{
+}
+
 void
 data::sample(uint32_t _device_id)
 {
@@ -587,9 +592,15 @@ data::sample(uint32_t _device_id)
                               gpu::is_jpeg_activity_supported(m_dev_id), _gpu_metrics));
 }
 
-void nic_data::sample(const std::string& nic)
+void nic_data::sample()
 {
-    // TODO
+    auto& data = nic_data::nic_stats_collector.get_data(_nic);
+    // TODO: Write perfetto track data.
+}
+
+const std::string& nic_data::get_nic() const
+{
+    return _nic;
 }
 
 void
@@ -648,6 +659,10 @@ config()
     {
         // TODO
         // nic_data::get_initial().at(nic).sample(nic); // ?
+        auto& nic_vec = nic_data::get_initial();
+        auto data = nic_data { nic };
+        nic_vec.push_back(data);
+        data.sample();
     }
 
     for (const auto& nic : nic_data::nic_list)
@@ -685,16 +700,22 @@ sample()
 #endif
 
     }
-
-    for (const auto& nic : nic_data::nic_list)
-    {
-        // TODO
-    }
 }
 
 void
 nic_sample()
 {
+    auto& nic_vec = nic_data::get_initial();
+    for (const auto& nic : nic_data::nic_list)
+    {
+        for (auto& data : nic_vec)
+        {
+            if (data.get_nic() == nic)
+            {
+                data.sample();
+            }
+        }
+    }
 }
 
 void
@@ -707,6 +728,13 @@ std::vector<data>&
 data::get_initial()
 {
     static std::vector<data> _v{};
+    return _v;
+}
+
+std::vector<nic_data>&
+nic_data::get_initial()
+{
+    static std::vector<nic_data> _v{};
     return _v;
 }
 

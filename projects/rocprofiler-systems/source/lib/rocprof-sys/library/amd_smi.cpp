@@ -74,6 +74,11 @@ namespace amd_smi
 using bundle_t          = std::deque<data>;
 using sampler_instances = thread_data<bundle_t, category::amd_smi>;
 
+#ifdef USE_AINIC
+using nic_bundle_t      = std::deque<nic_data>;
+using nic_sampler_instances = thread_data<nic_bundle_t, category::amd_smi>;
+#endif
+
 namespace
 {
 void
@@ -582,6 +587,11 @@ data::sample(uint32_t _device_id)
                               gpu::is_jpeg_activity_supported(m_dev_id), _gpu_metrics));
 }
 
+void nic_data::sample(const std::string& nic)
+{
+    // TODO
+}
+
 void
 data::print(std::ostream& _os) const
 {
@@ -600,6 +610,11 @@ data::print(std::ostream& _os) const
 namespace
 {
 std::vector<unique_ptr_t<bundle_t>*> _bundle_data{};
+
+#ifdef USE_AINIC
+std::vector<unique_ptr_t<nic_bundle_t>*> _nic_bundle_data{};
+#endif
+
 }
 
 void
@@ -617,7 +632,9 @@ config()
     }
     data::get_initial().resize(data::device_count);
     for(auto itr : data::device_list)
+    {
         data::get_initial().at(itr).sample(itr);
+    }
 
     metadata_initialize_category();
 
@@ -627,7 +644,13 @@ config()
         metadata_initialize_smi_pmc(_dev_id);
     }
 
-    for (const auto& nic : data::nic_list)
+    for(const auto& nic : nic_data::nic_list)
+    {
+        // TODO
+        // nic_data::get_initial().at(nic).sample(nic); // ?
+    }
+
+    for (const auto& nic : nic_data::nic_list)
     {
         metadata_initialize_ainic_smi_tracks(nic);
         metadata_initialize_ainic_smi_pmc(nic);
@@ -648,13 +671,30 @@ sample()
     {
         if(amd_smi::get_state() != State::Active) continue;
         ROCPROFSYS_DEBUG_F("Polling amd-smi for device %u...\n", itr);
+
         auto& _data = *_bundle_data.at(itr);
 
         if(!_data) continue;
 
         _data->emplace_back(data{ itr });
+
         ROCPROFSYS_DEBUG_F("    %s\n", TIMEMORY_JOIN("", _data->back()).c_str());
+
+#ifdef USE_AINIC
+    nic_sample();
+#endif
+
     }
+
+    for (const auto& nic : nic_data::nic_list)
+    {
+        // TODO
+    }
+}
+
+void
+nic_sample()
+{
 }
 
 void
@@ -900,6 +940,12 @@ data::post_process(uint32_t _dev_id)
     }
 }
 
+void
+nic_data::post_process(const std::string& nic)
+{
+    // TODO
+}
+
 //--------------------------------------------------------------------------------------//
 
 // Parse a comma-separated list of strings.
@@ -922,8 +968,8 @@ static std::list<std::string> parse_list(const std::string& nic_str) {
     return list;
 }
 
-std::list<std::string> data::nic_list = {};
-AINICStatsCollector data::nic_stats_collector;
+std::list<std::string> nic_data::nic_list = {};
+AINICStatsCollector nic_data::nic_stats_collector;
 
 void
 setup_ainic()
@@ -931,10 +977,10 @@ setup_ainic()
 #ifdef USE_AINIC
 
     auto _ainic_devices_v = get_sampling_ainics();
-    data::nic_list = parse_list(_ainic_devices_v);
+    nic_data::nic_list = parse_list(_ainic_devices_v);
 
     // Run get_stats() the first time, to get the names of all existing NICs.
-    data::nic_stats_collector.get_stats();
+    nic_data::nic_stats_collector.get_stats();
 
 #endif
 }
@@ -1098,6 +1144,12 @@ post_process()
     {
         ROCPROFSYS_VERBOSE(2, "Post-processing amd-smi data for device: %d", itr);
         data::post_process(itr);
+    }
+
+    for(auto& nic : nic_data::nic_list)
+    {
+        ROCPROFSYS_VERBOSE(2, "Post-processing amd-smi data for NIC: %s", nic.c_str());
+        nic_data::post_process(nic);
     }
 }
 

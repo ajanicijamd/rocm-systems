@@ -71,6 +71,9 @@ void
 sample();
 
 void
+nic_sample();
+
+void
 shutdown();
 
 void
@@ -150,6 +153,15 @@ private:
     static std::unique_ptr<std::thread>& get_thread();
     static bool                          setup();
     static bool                          shutdown();
+};
+
+#ifdef USE_AINIC
+
+struct nic_data
+{
+    void sample(const std::string& nic);
+
+    static void post_process(const std::string& nic);
 
 #ifdef USE_AINIC
     static std::list<std::string> nic_list;
@@ -157,6 +169,9 @@ private:
 #endif
 
 };
+
+#endif
+
 
 #if !defined(ROCPROFSYS_USE_ROCM) || ROCPROFSYS_USE_ROCM == 0
 

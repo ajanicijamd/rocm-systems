@@ -168,6 +168,7 @@ public:
     static std::vector<nic_data>& get_initial();
     static std::list<std::string> nic_list;
     const std::string& get_nic() const;
+    static bool setup();
 
     void sample();
 

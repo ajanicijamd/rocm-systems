@@ -584,7 +584,7 @@ data::sample(uint32_t _device_id)
     }
 #undef ROCPROFSYS_AMDSMI_GET
 
-    trace_cache::get_buffer_storage().store(
+   trace_cache::get_buffer_storage().store(
         trace_cache::entry_type::amd_smi_sample, serialize_settings(m_dev_id), _device_id,
         _timestamp, m_busy_perc.gfx_activity, m_busy_perc.umc_activity,
         m_busy_perc.mm_activity, m_power.current_socket_power, m_temp, m_mem_usage,
@@ -594,8 +594,11 @@ data::sample(uint32_t _device_id)
 
 void nic_data::sample()
 {
-    auto& data = nic_data::nic_stats_collector.get_data(_nic);
+    auto& stats = nic_data::nic_stats_collector.get_data(_nic);
     // TODO: Write perfetto track data.
+
+    // Stats for the NIC _nic are in stats (variable of type NICData):
+    // e.g. stats.rx_rdma_cnp_pkts
 }
 
 const std::string& nic_data::get_nic() const
@@ -654,6 +657,9 @@ config()
         metadata_initialize_smi_tracks(_dev_id);
         metadata_initialize_smi_pmc(_dev_id);
     }
+
+    // Get AI NIC data for all NICs at once by calling amd_smi.
+    nic_data::nic_stats_collector.get_stats();
 
     for(const auto& nic : nic_data::nic_list)
     {
@@ -743,6 +749,13 @@ data::setup()
 {
     perfetto_counter_track<data>::init();
     amd_smi::set_state(State::PreInit);
+    return true;
+}
+
+bool
+nic_data::setup()
+{
+    perfetto_counter_track<nic_data>::init();
     return true;
 }
 
@@ -972,6 +985,9 @@ void
 nic_data::post_process(const std::string& nic)
 {
     // TODO
+    using counter_track = perfetto_counter_track<nic_data>;
+//    TRACE_COUNTER(trait::name<category::amd_smi_ainic_rx_cnp>::value,
+//                  counter_track::at(nic, 0, _ts, 
 }
 
 //--------------------------------------------------------------------------------------//
@@ -1009,6 +1025,8 @@ setup_ainic()
 
     // Run get_stats() the first time, to get the names of all existing NICs.
     nic_data::nic_stats_collector.get_stats();
+
+    nic_data::setup();
 
 #endif
 }

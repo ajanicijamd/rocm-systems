@@ -32,6 +32,10 @@
 #    include <rocprofiler-sdk/version.h>
 #endif
 
+#if ROCPROFSYS_USE_AINIC > 0
+#    define USE_AINIC
+#endif
+
 namespace rocprofsys
 {
 namespace trace_cache
@@ -203,6 +207,13 @@ struct amd_smi_sample : storage_parsed_type_base
     std::vector<uint8_t> xcp_activity;
 };
 
+#ifdef USE_AINIC
+struct amd_smi_nic_sample : storage_parsed_type_base
+{
+    uint64_t  rx_rdma_cnp_pkts;
+};
+#endif // USE_AINIC
+
 struct cpu_freq_sample : storage_parsed_type_base
 {
     size_t               timestamp;
@@ -263,6 +274,7 @@ enum class entry_type : uint32_t
     amd_smi_sample          = 0x0006,
     cpu_freq_sample         = 0x0007,
     backtrace_region_sample = 0x0008,
+    amd_smi_nic_sample      = 0x0009,
     fragmented_space        = 0xFFFF
 };
 }  // namespace trace_cache

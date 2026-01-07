@@ -599,6 +599,10 @@ void nic_data::sample()
 
     // Stats for the NIC _nic are in stats (variable of type NICData):
     // e.g. stats.rx_rdma_cnp_pkts
+
+    trace_cache::get_buffer_storage().store(
+        trace_cache::entry_type::amd_smi_nic_sample,
+        stats.rx_rdma_cnp_pkts);
 }
 
 const std::string& nic_data::get_nic() const

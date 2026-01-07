@@ -217,6 +217,12 @@ storage_parser::consume_storage()
                 invoke_callbacks(header.type, _amd_smi_sample);
                 break;
             }
+            case entry_type::amd_smi_nic_sample:
+            {
+                amd_smi_nic_sample _amd_smi_nic_sample;
+                parse_data(sample.data(), _amd_smi_nic_sample.rx_rdma_cnp_pkts);
+                break;
+            }
             case entry_type::cpu_freq_sample:
             {
                 cpu_freq_sample _cpu_freq_sample;

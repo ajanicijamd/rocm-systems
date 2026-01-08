@@ -665,7 +665,7 @@ config()
     // Get AI NIC data for all NICs at once by calling amd_smi.
     nic_data::nic_stats_collector.get_stats();
 
-    for(const auto& nic : nic_data::nic_list)
+    for(const auto& nic : nic_data::nic_vec)
     {
         // TODO
         // nic_data::get_initial().at(nic).sample(nic); // ?
@@ -675,7 +675,7 @@ config()
         data.sample();
     }
 
-    for (const auto& nic : nic_data::nic_list)
+    for (const auto& nic : nic_data::nic_vec)
     {
         metadata_initialize_ainic_smi_tracks(nic);
         metadata_initialize_ainic_smi_pmc(nic);
@@ -716,7 +716,7 @@ void
 nic_sample()
 {
     auto& nic_vec = nic_data::get_initial();
-    for (const auto& nic : nic_data::nic_list)
+    for (const auto& nic : nic_data::nic_vec)
     {
         for (auto& data : nic_vec)
         {
@@ -997,8 +997,8 @@ nic_data::post_process(const std::string& nic)
 //--------------------------------------------------------------------------------------//
 
 // Parse a comma-separated list of strings.
-static std::list<std::string> parse_list(const std::string& nic_str) {
-    std::list<std::string> list {};
+static std::vector<std::string> parse_list(const std::string& nic_str) {
+    std::vector<std::string> nic_vec {};
     std::string current {""};
     for (auto& ch : nic_str) {
         if (ch == ',') {
@@ -1013,10 +1013,10 @@ static std::list<std::string> parse_list(const std::string& nic_str) {
     if (current.size() > 0) {
         list.push_back(current);
     }
-    return list;
+    return nic_vec;
 }
 
-std::list<std::string> nic_data::nic_list = {};
+std::list<std::string> nic_data::nic_vec = {};
 AINICStatsCollector nic_data::nic_stats_collector;
 
 void
@@ -1025,7 +1025,7 @@ setup_ainic()
 #ifdef USE_AINIC
 
     auto _ainic_devices_v = get_sampling_ainics();
-    nic_data::nic_list = parse_list(_ainic_devices_v);
+    nic_data::nic_vec = parse_list(_ainic_devices_v);
 
     // Run get_stats() the first time, to get the names of all existing NICs.
     nic_data::nic_stats_collector.get_stats();

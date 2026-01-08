@@ -166,7 +166,7 @@ public:
     explicit nic_data(const std::string& nic);
 
     static std::vector<nic_data>& get_initial();
-    static std::list<std::string> nic_vec;
+    static std::vector<std::string> nic_vec;
     const std::string& get_nic() const;
     static bool setup();
 

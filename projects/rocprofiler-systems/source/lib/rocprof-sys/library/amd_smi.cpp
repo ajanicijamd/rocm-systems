@@ -1016,7 +1016,7 @@ static std::vector<std::string> parse_list(const std::string& nic_str) {
     return nic_vec;
 }
 
-std::list<std::string> nic_data::nic_vec = {};
+std::vector<std::string> nic_data::nic_vec = {};
 AINICStatsCollector nic_data::nic_stats_collector;
 
 void

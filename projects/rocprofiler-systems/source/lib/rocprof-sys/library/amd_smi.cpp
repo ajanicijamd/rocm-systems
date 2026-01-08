@@ -986,9 +986,10 @@ data::post_process(uint32_t _dev_id)
 }
 
 void
-nic_data::post_process(const std::string& nic)
+// nic_data::post_process(const std::string& nic)
+nic_data::post_process(size_t i)
 {
-    // TODO
+    std::string& nic = nic_data::nic_vec.at(i);
     using counter_track = perfetto_counter_track<nic_data>;
 //    TRACE_COUNTER(trait::name<category::amd_smi_ainic_rx_cnp>::value,
 //                  counter_track::at(nic, 0, _ts, 
@@ -1196,10 +1197,10 @@ post_process()
         data::post_process(itr);
     }
 
-    for(auto& nic : nic_data::nic_vec)
+    for(size_t i = 0; i < nic_data::nic_vec.size(); ++i)
     {
         ROCPROFSYS_VERBOSE(2, "Post-processing amd-smi data for NIC: %s", nic.c_str());
-        nic_data::post_process(nic);
+        nic_data::post_process(i);
     }
 }
 

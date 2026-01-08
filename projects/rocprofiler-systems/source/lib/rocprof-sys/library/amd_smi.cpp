@@ -1003,7 +1003,7 @@ static std::vector<std::string> parse_list(const std::string& nic_str) {
     for (auto& ch : nic_str) {
         if (ch == ',') {
             if (current.size() > 0) {
-                list.push_back(current);
+                nic_vec.push_back(current);
                 current = "";
             }
             continue;
@@ -1011,7 +1011,7 @@ static std::vector<std::string> parse_list(const std::string& nic_str) {
         current += ch;
     }
     if (current.size() > 0) {
-        list.push_back(current);
+        nic_vec.push_back(current);
     }
     return nic_vec;
 }

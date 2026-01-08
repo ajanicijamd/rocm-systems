@@ -115,7 +115,9 @@ ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_power, ROCPROFSYS_CATEGORY_AMD_SMI_
 ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_memory_usage, ROCPROFSYS_CATEGORY_AMD_SMI_MEMORY_USAGE, "device_memory_usage", "Memory usage of a GPU device")
 ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_vcn_activity, ROCPROFSYS_CATEGORY_AMD_SMI_VCN_ACTIVITY, "device_vcn_activity", "VCN Activity of a GPU device")
 ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_jpeg_activity, ROCPROFSYS_CATEGORY_AMD_SMI_JPEG_ACTIVITY, "device_jpeg_activity", "JPEG Activity of a GPU device")
-ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_ainic_rx_cnp, ROCPROFSYS_CATEGORY_AMD_SMI_AINIC_RX_CNP, "nic_rx_cnp_pkts", "AI NIC rx CNP Packets")
+
+ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_nic, ROCPROFSYS_CATEGORY_AMD_SMI_AINIC, "amd_smi_nic", "AMD-SMI NIC data")
+ROCPROFSYS_DEFINE_CATEGORY(category, amd_smi_nic_rx_cnp, ROCPROFSYS_CATEGORY_AMD_SMI_AINIC_RX_CNP, "nic_rx_cnp_pkts", "AI NIC RX CNP Packets")
 ROCPROFSYS_DEFINE_CATEGORY(category, rocm_rccl, ROCPROFSYS_CATEGORY_ROCM_RCCL, "rccl", "ROCm Communication Collectives Library (RCCL) regions")
 ROCPROFSYS_DEFINE_CATEGORY(category, pthread, ROCPROFSYS_CATEGORY_PTHREAD, "pthread", "POSIX threading functions")
 ROCPROFSYS_DEFINE_CATEGORY(category, kokkos, ROCPROFSYS_CATEGORY_KOKKOS, "kokkos", "KokkosTools regions")
@@ -187,7 +189,8 @@ using name = perfetto_category<Tp...>;
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_power),                           \
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_memory_usage),                    \
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_vcn_activity),                    \
-        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_ainic_rx_cnp),                    \
+        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic),                             \
+        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_rx_cnp),                      \
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_jpeg_activity),                   \
         ROCPROFSYS_PERFETTO_CATEGORY(category::rocm_rccl),                               \
         ROCPROFSYS_PERFETTO_CATEGORY(category::pthread),                                 \

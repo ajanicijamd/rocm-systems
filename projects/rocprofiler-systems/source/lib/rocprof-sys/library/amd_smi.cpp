@@ -76,7 +76,7 @@ using sampler_instances = thread_data<bundle_t, category::amd_smi>;
 
 #ifdef USE_AINIC
 using nic_bundle_t      = std::deque<nic_data>;
-using nic_sampler_instances = thread_data<nic_bundle_t, category::amd_smi>;
+using nic_sampler_instances = thread_data<nic_bundle_t, category::amd_smi_nic>;
 #endif
 
 namespace
@@ -164,7 +164,7 @@ metadata_initialize_ainic_smi_tracks(const std::string& nic)
     const auto thread_id = std::nullopt;
 
     trace_cache::get_metadata_registry().add_track(
-        { trace_cache::info::annotate_with_nic<category::amd_smi_ainic_rx_cnp>(nic),
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_rx_cnp>(nic),
           thread_id, "{}" });
 }
 
@@ -305,8 +305,8 @@ metadata_initialize_ainic_smi_pmc(const std::string& nic)
 
     trace_cache::get_metadata_registry().add_pmc_info(
         { agent_type::NIC, std::hash<std::string>{}(nic), TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
-          trait::name<category::amd_smi_ainic_rx_cnp>::value, "NIC RX CNP PKTS",
-          trait::name<category::amd_smi_ainic_rx_cnp>::description, LONG_DESCRIPTION,
+          trait::name<category::amd_smi_nic_rx_cnp>::value, "NIC RX CNP PKTS",
+          trait::name<category::amd_smi_nic_rx_cnp>::description, LONG_DESCRIPTION,
           COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
           EXPRESSION, 0, 0, "{}" });
 }
@@ -987,12 +987,35 @@ data::post_process(uint32_t _dev_id)
 
 void
 // nic_data::post_process(const std::string& nic)
-nic_data::post_process(size_t i)
+nic_data::post_process(size_t nic_index)
 {
-    std::string& nic = nic_data::nic_vec.at(i);
+    std::string& nic = nic_data::nic_vec.at(nic_index);
     using counter_track = perfetto_counter_track<nic_data>;
-//    TRACE_COUNTER(trait::name<category::amd_smi_ainic_rx_cnp>::value,
-//                  counter_track::at(nic, 0, _ts, 
+
+    auto& stats = nic_data::nic_stats_collector.get_data(nic);
+
+    auto&       _amd_smi_v   = nic_sampler_instances::get()->at(nic_index);
+    auto        _amd_smi     = (_amd_smi_v) ? *_amd_smi_v : std::deque<amd_smi::nic_data>{};
+    const auto& _thread_info = thread_info::get(0, InternalTID);
+
+    for(auto& itr : _amd_smi)
+    {
+        uint64_t _ts = itr.m_ts;
+        if(!_thread_info->is_valid_time(_ts)) continue;
+
+        auto addendum = [&](const char* _v) {
+            return JOIN(" ", "AI NIC", _v, JOIN("", '[', nic_index, ']'), "(S)");
+        };
+
+        std::uint32_t _rx_rdma_cnp_pkts = stats.rx_rdma_cnp_pkts;
+
+        counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "%");
+
+        size_t track_index = 0;
+
+        TRACE_COUNTER("nic_rx_cnp_pkts",
+            counter_track::at(nic_index, track_index++), _ts, _rx_rdma_cnp_pkts);
+    }
 }
 
 //--------------------------------------------------------------------------------------//
@@ -1199,6 +1222,7 @@ post_process()
 
     for(size_t i = 0; i < nic_data::nic_vec.size(); ++i)
     {
+        auto& nic = nic_data::nic_vec.at(i);
         ROCPROFSYS_VERBOSE(2, "Post-processing amd-smi data for NIC: %s", nic.c_str());
         nic_data::post_process(i);
     }

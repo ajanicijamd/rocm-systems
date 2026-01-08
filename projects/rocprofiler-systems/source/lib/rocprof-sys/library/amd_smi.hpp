@@ -162,7 +162,8 @@ private:
 
 struct nic_data
 {
-public:
+    using timestamp_t = int64_t;
+
     explicit nic_data(const std::string& nic);
 
     static std::vector<nic_data>& get_initial();
@@ -172,9 +173,11 @@ public:
 
     void sample();
 
-    static void post_process(const std::string& nic);
+    static void post_process(size_t nic_index);
 
     static AINICStatsCollector    nic_stats_collector;
+
+    timestamp_t                   m_ts = 0;
 
 private:
     std::string _nic;

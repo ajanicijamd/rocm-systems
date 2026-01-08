@@ -1196,7 +1196,7 @@ post_process()
         data::post_process(itr);
     }
 
-    for(auto& nic : nic_data::nic_list)
+    for(auto& nic : nic_data::nic_vec)
     {
         ROCPROFSYS_VERBOSE(2, "Post-processing amd-smi data for NIC: %s", nic.c_str());
         nic_data::post_process(nic);

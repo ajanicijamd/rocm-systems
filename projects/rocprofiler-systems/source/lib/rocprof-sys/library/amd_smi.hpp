@@ -164,14 +164,14 @@ struct nic_data
 {
     using timestamp_t = int64_t;
 
-    explicit nic_data(const std::string& nic);
+    explicit nic_data(uint32_t nic_index, const std::string& nic);
 
     static std::vector<nic_data>& get_initial();
     static std::vector<std::string> nic_vec;
     const std::string& get_nic() const;
     static bool setup();
 
-    void sample();
+    void sample(size_t nic_index);
 
     static void post_process(size_t nic_index);
 
@@ -181,6 +181,8 @@ struct nic_data
 
 private:
     std::string _nic;
+    uint32_t    _nic_index;
+    uint32_t    _rx_rdma_cnp_pkts;
 };
 
 #endif

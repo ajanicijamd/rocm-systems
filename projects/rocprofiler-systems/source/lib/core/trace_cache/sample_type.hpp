@@ -210,6 +210,7 @@ struct amd_smi_sample : storage_parsed_type_base
 #ifdef USE_AINIC
 struct amd_smi_nic_sample : storage_parsed_type_base
 {
+    uint32_t  nic_index;
     uint64_t  rx_rdma_cnp_pkts;
 };
 #endif // USE_AINIC

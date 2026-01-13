@@ -77,6 +77,9 @@ using sampler_instances = thread_data<bundle_t, category::amd_smi>;
 #ifdef USE_AINIC
 using nic_bundle_t      = std::deque<nic_data>;
 using nic_sampler_instances = thread_data<nic_bundle_t, category::amd_smi_nic>;
+
+std::vector<nic_bundle_t> nic_sampler_vec = {};
+
 #endif
 
 namespace
@@ -86,6 +89,8 @@ metadata_initialize_category()
 {
     trace_cache::get_metadata_registry().add_string(
         trait::name<category::amd_smi>::value);
+    trace_cache::get_metadata_registry().add_string(
+        trait::name<category::amd_smi_nic>::value);
 }
 
 void
@@ -159,12 +164,16 @@ metadata_initialize_smi_tracks(size_t gpu_id)
 }
 
 void
-metadata_initialize_ainic_smi_tracks(const std::string& nic)
+metadata_initialize_ainic_smi_tracks(uint32_t nic_index)
 {
     const auto thread_id = std::nullopt;
+    std::string& nic = nic_data::nic_vec[nic_index];
+    char buf[256];
+    snprintf(buf, sizeof(buf), "%s (%d)", nic.c_str(), (int)nic_index);
+    std::string track_name { buf };
 
     trace_cache::get_metadata_registry().add_track(
-        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_rx_cnp>(nic),
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_rx_cnp>(track_name),
           thread_id, "{}" });
 }
 
@@ -292,7 +301,7 @@ metadata_initialize_smi_pmc(size_t gpu_id)
 }
 
 void
-metadata_initialize_ainic_smi_pmc(const std::string& nic)
+metadata_initialize_ainic_smi_pmc(uint32_t nic_index)
 {
     size_t      EVENT_CODE       = 0;
     size_t      INSTANCE_ID      = 0;
@@ -304,7 +313,7 @@ metadata_initialize_ainic_smi_pmc(const std::string& nic)
     const char* TARGET_ARCH      = "NIC";
 
     trace_cache::get_metadata_registry().add_pmc_info(
-        { agent_type::NIC, std::hash<std::string>{}(nic), TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+        { agent_type::NIC, nic_index, TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
           trait::name<category::amd_smi_nic_rx_cnp>::value, "NIC RX CNP PKTS",
           trait::name<category::amd_smi_nic_rx_cnp>::description, LONG_DESCRIPTION,
           COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
@@ -474,8 +483,9 @@ std::unique_ptr<data::promise_t> data::polling_finished = {};
 
 data::data(uint32_t _dev_id) { sample(_dev_id); }
 
-nic_data::nic_data(const std::string& nic)
-    : _nic(nic)
+nic_data::nic_data(uint32_t nic_index, const std::string& nic)
+    : _nic(nic),
+      _nic_index(nic_index)
 {
 }
 
@@ -592,7 +602,7 @@ data::sample(uint32_t _device_id)
                               gpu::is_jpeg_activity_supported(m_dev_id), _gpu_metrics));
 }
 
-void nic_data::sample()
+void nic_data::sample(size_t nic_index)
 {
     auto& stats = nic_data::nic_stats_collector.get_data(_nic);
     // TODO: Write perfetto track data.
@@ -601,7 +611,7 @@ void nic_data::sample()
     // e.g. stats.rx_rdma_cnp_pkts
 
     trace_cache::get_buffer_storage().store(
-        trace_cache::entry_type::amd_smi_nic_sample,
+        trace_cache::entry_type::amd_smi_nic_sample, nic_index,
         stats.rx_rdma_cnp_pkts);
 }
 
@@ -665,20 +675,12 @@ config()
     // Get AI NIC data for all NICs at once by calling amd_smi.
     nic_data::nic_stats_collector.get_stats();
 
-    for(const auto& nic : nic_data::nic_vec)
+    for(uint32_t nic_index = 0; nic_index < nic_data::nic_vec.size(); ++nic_index)
     {
-        // TODO
-        // nic_data::get_initial().at(nic).sample(nic); // ?
-        auto& nic_vec = nic_data::get_initial();
-        auto data = nic_data { nic };
-        nic_vec.push_back(data);
-        data.sample();
-    }
-
-    for (const auto& nic : nic_data::nic_vec)
-    {
-        metadata_initialize_ainic_smi_tracks(nic);
-        metadata_initialize_ainic_smi_pmc(nic);
+        auto nic_bundle = std::deque<nic_data> {};
+        nic_sampler_vec.push_back(nic_bundle);
+        metadata_initialize_ainic_smi_tracks(nic_index);
+        metadata_initialize_ainic_smi_pmc(nic_index);
     }
 
     amd_smi::set_state(State::Active);
@@ -704,27 +706,28 @@ sample()
         _data->emplace_back(data{ itr });
 
         ROCPROFSYS_DEBUG_F("    %s\n", TIMEMORY_JOIN("", _data->back()).c_str());
+    }
+
 
 #ifdef USE_AINIC
     nic_sample();
 #endif
 
-    }
 }
 
 void
 nic_sample()
 {
-    auto& nic_vec = nic_data::get_initial();
-    for (const auto& nic : nic_data::nic_vec)
+//    auto& nic_vec = nic_data::get_initial();
+//    for (const auto& nic : nic_data::nic_vec)
+
+    if(amd_smi::get_state() != State::Active) return;
+
+    for(uint32_t nic_index = 0; nic_index < nic_data::nic_vec.size(); ++nic_index)
     {
-        for (auto& data : nic_vec)
-        {
-            if (data.get_nic() == nic)
-            {
-                data.sample();
-            }
-        }
+        std::string& nic = nic_data::nic_vec[nic_index];
+        auto data = nic_data { nic_index, nic };
+        nic_sampler_vec[nic_index].push_back(data);
     }
 }
 
@@ -986,36 +989,25 @@ data::post_process(uint32_t _dev_id)
 }
 
 void
-// nic_data::post_process(const std::string& nic)
 nic_data::post_process(size_t nic_index)
 {
-    std::string& nic = nic_data::nic_vec.at(nic_index);
-    using counter_track = perfetto_counter_track<nic_data>;
+	using counter_track = perfetto_counter_track<nic_data>;
 
-    auto& stats = nic_data::nic_stats_collector.get_data(nic);
+	auto addendum = [&](const char* _v) {
+		return JOIN(" ", "AI NIC", _v, JOIN("", '[', nic_index, ']'), "(S)");
+	};
 
-    auto&       _amd_smi_v   = nic_sampler_instances::get()->at(nic_index);
-    auto        _amd_smi     = (_amd_smi_v) ? *_amd_smi_v : std::deque<amd_smi::nic_data>{};
-    const auto& _thread_info = thread_info::get(0, InternalTID);
+    for(auto& itr : nic_sampler_vec[nic_index])
+	{
+	    uint64_t _ts = itr.m_ts;
+	    uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
+		counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "bytes");
 
-    for(auto& itr : _amd_smi)
-    {
-        uint64_t _ts = itr.m_ts;
-        if(!_thread_info->is_valid_time(_ts)) continue;
-
-        auto addendum = [&](const char* _v) {
-            return JOIN(" ", "AI NIC", _v, JOIN("", '[', nic_index, ']'), "(S)");
-        };
-
-        std::uint32_t _rx_rdma_cnp_pkts = stats.rx_rdma_cnp_pkts;
-
-        counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "%");
-
-        size_t track_index = 0;
+		size_t track_index = 0;
 
         TRACE_COUNTER("nic_rx_cnp_pkts",
             counter_track::at(nic_index, track_index++), _ts, _rx_rdma_cnp_pkts);
-    }
+	}
 }
 
 //--------------------------------------------------------------------------------------//

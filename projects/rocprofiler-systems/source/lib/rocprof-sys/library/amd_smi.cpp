@@ -533,6 +533,7 @@ nic_data::nic_data(uint32_t nic_index, const std::string& nic)
     : _nic(nic),
       _nic_index(nic_index)
 {
+    sample();
 }
 
 void
@@ -648,12 +649,18 @@ data::sample(uint32_t _device_id)
                               gpu::is_jpeg_activity_supported(m_dev_id), _gpu_metrics));
 }
 
-void nic_data::sample(size_t nic_index)
+void nic_data::sample()
 {
     auto& stats = nic_data::nic_stats_collector.get_data(_nic);
+    _rx_rdma_cnp_pkts = stats.rx_rdma_cnp_pkts;
+    _tx_rdma_cnp_pkts = stats.tx_rdma_cnp_pkts;
+    _rx_ucast_bytes = stats.rx_rdma_ucast_bytes;
+    _tx_ucast_bytes = stats.tx_rdma_ucast_bytes;
+    _rx_ucast_pkts = stats.rx_rdma_ucast_pkts;
+    _tx_ucast_pkts = stats.tx_rdma_ucast_pkts;
 
     trace_cache::get_buffer_storage().store(
-        trace_cache::entry_type::amd_smi_nic_sample, nic_index,
+        trace_cache::entry_type::amd_smi_nic_sample, _nic_index,
         stats.rx_rdma_cnp_pkts, stats.tx_rdma_cnp_pkts,
         stats.rx_rdma_ucast_bytes, stats.tx_rdma_ucast_bytes,
         stats.rx_rdma_ucast_pkts, stats.tx_rdma_ucast_pkts
@@ -717,7 +724,7 @@ config()
         metadata_initialize_smi_pmc(_dev_id);
     }
 
-    // Get AI NIC data for all NICs at once by calling amd_smi.
+    // Get AI NIC data for all NICs at once.
     nic_data::nic_stats_collector.get_stats();
 
     for(uint32_t nic_index = 0; nic_index < nic_data::nic_vec.size(); ++nic_index)
@@ -767,6 +774,9 @@ nic_sample()
 //    for (const auto& nic : nic_data::nic_vec)
 
     if(amd_smi::get_state() != State::Active) return;
+
+    // Get AI NIC data for all NICs at once.
+    nic_data::nic_stats_collector.get_stats();
 
     for(uint32_t nic_index = 0; nic_index < nic_data::nic_vec.size(); ++nic_index)
     {

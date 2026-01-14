@@ -171,7 +171,7 @@ struct nic_data
     const std::string& get_nic() const;
     static bool setup();
 
-    void sample(size_t nic_index);
+    void sample();
 
     static void post_process(size_t nic_index);
 

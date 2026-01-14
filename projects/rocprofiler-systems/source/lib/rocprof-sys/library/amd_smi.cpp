@@ -175,6 +175,9 @@ metadata_initialize_ainic_smi_tracks(uint32_t nic_index)
     trace_cache::get_metadata_registry().add_track(
         { trace_cache::info::annotate_with_nic<category::amd_smi_nic_rx_cnp>(track_name),
           thread_id, "{}" });
+    trace_cache::get_metadata_registry().add_track(
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_tx_cnp>(track_name),
+          thread_id, "{}" });
 }
 
 void
@@ -318,6 +321,13 @@ metadata_initialize_ainic_smi_pmc(uint32_t nic_index)
           trait::name<category::amd_smi_nic_rx_cnp>::description, LONG_DESCRIPTION,
           COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
           EXPRESSION, 0, 0, "{}" });
+    trace_cache::get_metadata_registry().add_pmc_info(
+        { agent_type::NIC, nic_index, TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+          trait::name<category::amd_smi_nic_tx_cnp>::value, "NIC TX CNP PKTS",
+          trait::name<category::amd_smi_nic_tx_cnp>::description, LONG_DESCRIPTION,
+          COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
+          EXPRESSION, 0, 0, "{}" });
+
 }
 
 auto&
@@ -1003,12 +1013,15 @@ nic_data::post_process(size_t nic_index)
 	    uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
 	    uint32_t _tx_rdma_cnp_pkts = itr._tx_rdma_cnp_pkts;
 		counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "bytes");
+		counter_track::emplace(nic_index, addendum("TX RDMA CNP PKTS"), "bytes");
 
 		size_t track_index = 0;
 
         TRACE_COUNTER("nic_rx_cnp_pkts",
-            counter_track::at(nic_index, track_index++), _ts,
-            _rx_rdma_cnp_pkts, _tx_rdma_cnp_pkts);
+            counter_track::at(nic_index, track_index++), _ts, _rx_rdma_cnp_pkts);
+        TRACE_COUNTER("nic_tx_cnp_pkts",
+            counter_track::at(nic_index, track_index++), _ts, _tx_rdma_cnp_pkts);
+
 	}
 }
 

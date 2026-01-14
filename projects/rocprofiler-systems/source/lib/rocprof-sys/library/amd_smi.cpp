@@ -178,6 +178,19 @@ metadata_initialize_ainic_smi_tracks(uint32_t nic_index)
     trace_cache::get_metadata_registry().add_track(
         { trace_cache::info::annotate_with_nic<category::amd_smi_nic_tx_cnp>(track_name),
           thread_id, "{}" });
+    trace_cache::get_metadata_registry().add_track(
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_rx_ucast_bytes>(track_name),
+          thread_id, "{}" });
+    trace_cache::get_metadata_registry().add_track(
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_tx_ucast_bytes>(track_name),
+          thread_id, "{}" });
+    trace_cache::get_metadata_registry().add_track(
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_rx_ucast_pkts>(track_name),
+          thread_id, "{}" });
+    trace_cache::get_metadata_registry().add_track(
+        { trace_cache::info::annotate_with_nic<category::amd_smi_nic_tx_ucast_pkts>(track_name),
+          thread_id, "{}" });
+
 }
 
 void
@@ -327,7 +340,30 @@ metadata_initialize_ainic_smi_pmc(uint32_t nic_index)
           trait::name<category::amd_smi_nic_tx_cnp>::description, LONG_DESCRIPTION,
           COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
           EXPRESSION, 0, 0, "{}" });
-
+    trace_cache::get_metadata_registry().add_pmc_info(
+        { agent_type::NIC, nic_index, TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+          trait::name<category::amd_smi_nic_rx_ucast_bytes>::value, "AI NIC RX UCAST BYTES",
+          trait::name<category::amd_smi_nic_rx_ucast_bytes>::description, LONG_DESCRIPTION,
+          COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
+          EXPRESSION, 0, 0, "{}" });
+    trace_cache::get_metadata_registry().add_pmc_info(
+        { agent_type::NIC, nic_index, TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+          trait::name<category::amd_smi_nic_tx_ucast_bytes>::value, "AI NIC TX UCAST BYTES",
+          trait::name<category::amd_smi_nic_tx_ucast_bytes>::description, LONG_DESCRIPTION,
+          COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
+          EXPRESSION, 0, 0, "{}" });
+    trace_cache::get_metadata_registry().add_pmc_info(
+        { agent_type::NIC, nic_index, TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+          trait::name<category::amd_smi_nic_rx_ucast_pkts>::value, "AI NIC RX UCAST PKTS",
+          trait::name<category::amd_smi_nic_rx_ucast_pkts>::description, LONG_DESCRIPTION,
+          COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
+          EXPRESSION, 0, 0, "{}" });
+    trace_cache::get_metadata_registry().add_pmc_info(
+        { agent_type::NIC, nic_index, TARGET_ARCH, EVENT_CODE, INSTANCE_ID,
+          trait::name<category::amd_smi_nic_tx_ucast_pkts>::value, "AI NIC TX UCAST PKTS",
+          trait::name<category::amd_smi_nic_tx_ucast_pkts>::description, LONG_DESCRIPTION,
+          COMPONENT, trace_cache::ABSOLUTE, rocprofsys::trace_cache::ABSOLUTE, BLOCK,
+          EXPRESSION, 0, 0, "{}" });
 }
 
 auto&
@@ -615,14 +651,13 @@ data::sample(uint32_t _device_id)
 void nic_data::sample(size_t nic_index)
 {
     auto& stats = nic_data::nic_stats_collector.get_data(_nic);
-    // TODO: Write perfetto track data.
-
-    // Stats for the NIC _nic are in stats (variable of type NICData):
-    // e.g. stats.rx_rdma_cnp_pkts
 
     trace_cache::get_buffer_storage().store(
         trace_cache::entry_type::amd_smi_nic_sample, nic_index,
-        stats.rx_rdma_cnp_pkts, stats.tx_rdma_cnp_pkts);
+        stats.rx_rdma_cnp_pkts, stats.tx_rdma_cnp_pkts,
+        stats.rx_rdma_ucast_bytes, stats.tx_rdma_ucast_bytes,
+        stats.rx_rdma_ucast_pkts, stats.tx_rdma_ucast_pkts
+    );
 }
 
 const std::string& nic_data::get_nic() const
@@ -1009,11 +1044,20 @@ nic_data::post_process(size_t nic_index)
 
     for(auto& itr : nic_sampler_vec[nic_index])
 	{
-	    uint64_t _ts = itr.m_ts;
+	    uint64_t _ts               = itr.m_ts;
 	    uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
 	    uint32_t _tx_rdma_cnp_pkts = itr._tx_rdma_cnp_pkts;
-		counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "bytes");
-		counter_track::emplace(nic_index, addendum("TX RDMA CNP PKTS"), "bytes");
+	    uint32_t _rx_ucast_bytes   = itr._rx_ucast_bytes;
+	    uint32_t _tx_ucast_bytes   = itr._tx_ucast_bytes;
+	    uint32_t _rx_ucast_pkts    = itr._rx_ucast_pkts;
+	    uint32_t _tx_ucast_pkts    = itr._tx_ucast_pkts;
+
+        counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "packets");
+		counter_track::emplace(nic_index, addendum("TX RDMA CNP PKTS"), "packets");
+        counter_track::emplace(nic_index, addendum("RX RDMA UCAST BYTES"), "bytes");
+		counter_track::emplace(nic_index, addendum("TX RDMA UCAST BYTES"), "bytes");
+        counter_track::emplace(nic_index, addendum("RX RDMA UCAST PKTS"), "packets");
+		counter_track::emplace(nic_index, addendum("TX RDMA UCAST PKTS"), "packets");
 
 		size_t track_index = 0;
 
@@ -1021,7 +1065,14 @@ nic_data::post_process(size_t nic_index)
             counter_track::at(nic_index, track_index++), _ts, _rx_rdma_cnp_pkts);
         TRACE_COUNTER("nic_tx_cnp_pkts",
             counter_track::at(nic_index, track_index++), _ts, _tx_rdma_cnp_pkts);
-
+        TRACE_COUNTER("nic_rx_ucast_bytes",
+            counter_track::at(nic_index, track_index++), _ts, _rx_ucast_bytes);
+        TRACE_COUNTER("nic_tx_ucast_bytes",
+            counter_track::at(nic_index, track_index++), _ts, _tx_ucast_bytes);
+        TRACE_COUNTER("nic_rx_ucast_pkts",
+            counter_track::at(nic_index, track_index++), _ts, _rx_ucast_pkts);
+        TRACE_COUNTER("nic_tx_ucast_pkts",
+            counter_track::at(nic_index, track_index++), _ts, _tx_ucast_pkts);
 	}
 }
 

@@ -1049,7 +1049,6 @@ nic_data::post_process(size_t nic_index)
     using counter_track = perfetto_counter_track<nic_data>;
     std::string& nic = nic_data::nic_vec[nic_index];
 
-
     auto addendum = [&](const char* _v) {
         return JOIN(" ", nic, _v, JOIN("", '[', nic_index, ']'), "(S)");
     };
@@ -1058,20 +1057,20 @@ nic_data::post_process(size_t nic_index)
     {
         uint64_t _ts               = itr.m_ts;
         uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
-	    uint32_t _tx_rdma_cnp_pkts = itr._tx_rdma_cnp_pkts;
-	    uint32_t _rx_ucast_bytes   = itr._rx_ucast_bytes;
-	    uint32_t _tx_ucast_bytes   = itr._tx_ucast_bytes;
-	    uint32_t _rx_ucast_pkts    = itr._rx_ucast_pkts;
-	    uint32_t _tx_ucast_pkts    = itr._tx_ucast_pkts;
+        uint32_t _tx_rdma_cnp_pkts = itr._tx_rdma_cnp_pkts;
+        uint32_t _rx_ucast_bytes   = itr._rx_ucast_bytes;
+        uint32_t _tx_ucast_bytes   = itr._tx_ucast_bytes;
+        uint32_t _rx_ucast_pkts    = itr._rx_ucast_pkts;
+        uint32_t _tx_ucast_pkts    = itr._tx_ucast_pkts;
 
         counter_track::emplace(nic_index, addendum("RX CNP PKTS"), "packets");
-		counter_track::emplace(nic_index, addendum("TX CNP PKTS"), "packets");
+        counter_track::emplace(nic_index, addendum("TX CNP PKTS"), "packets");
         counter_track::emplace(nic_index, addendum("RX UCAST BYTES"), "bytes");
-		counter_track::emplace(nic_index, addendum("TX UCAST BYTES"), "bytes");
+        counter_track::emplace(nic_index, addendum("TX UCAST BYTES"), "bytes");
         counter_track::emplace(nic_index, addendum("RX UCAST PKTS"), "packets");
         counter_track::emplace(nic_index, addendum("TX UCAST PKTS"), "packets");
 
-		size_t track_index = 0;
+        size_t track_index = 0;
 
         TRACE_COUNTER("nic_rx_cnp_pkts",
             counter_track::at(nic_index, track_index++), _ts, _rx_rdma_cnp_pkts);
@@ -1085,7 +1084,7 @@ nic_data::post_process(size_t nic_index)
             counter_track::at(nic_index, track_index++), _ts, _rx_ucast_pkts);
         TRACE_COUNTER("nic_tx_ucast_pkts",
             counter_track::at(nic_index, track_index++), _ts, _tx_ucast_pkts);
-	}
+    }
 }
 
 //--------------------------------------------------------------------------------------//

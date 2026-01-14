@@ -183,6 +183,7 @@ private:
     std::string _nic;
     uint32_t    _nic_index;
     uint32_t    _rx_rdma_cnp_pkts;
+    uint32_t    _tx_rdma_cnp_pkts;
 };
 
 #endif

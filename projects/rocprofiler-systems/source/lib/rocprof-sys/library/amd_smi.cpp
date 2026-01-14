@@ -612,7 +612,7 @@ void nic_data::sample(size_t nic_index)
 
     trace_cache::get_buffer_storage().store(
         trace_cache::entry_type::amd_smi_nic_sample, nic_index,
-        stats.rx_rdma_cnp_pkts);
+        stats.rx_rdma_cnp_pkts, stats.tx_rdma_cnp_pkts);
 }
 
 const std::string& nic_data::get_nic() const
@@ -1001,12 +1001,14 @@ nic_data::post_process(size_t nic_index)
 	{
 	    uint64_t _ts = itr.m_ts;
 	    uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
+	    uint32_t _tx_rdma_cnp_pkts = itr._tx_rdma_cnp_pkts;
 		counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "bytes");
 
 		size_t track_index = 0;
 
         TRACE_COUNTER("nic_rx_cnp_pkts",
-            counter_track::at(nic_index, track_index++), _ts, _rx_rdma_cnp_pkts);
+            counter_track::at(nic_index, track_index++), _ts,
+            _rx_rdma_cnp_pkts, _tx_rdma_cnp_pkts);
 	}
 }
 

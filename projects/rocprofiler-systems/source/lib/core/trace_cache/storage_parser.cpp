@@ -220,7 +220,8 @@ storage_parser::consume_storage()
             case entry_type::amd_smi_nic_sample:
             {
                 amd_smi_nic_sample _amd_smi_nic_sample;
-                parse_data(sample.data(), _amd_smi_nic_sample.rx_rdma_cnp_pkts);
+                parse_data(sample.data(), _amd_smi_nic_sample.rx_rdma_cnp_pkts,
+                           _amd_smi_nic_sample.tx_rdma_cnp_pkts);
                 break;
             }
             case entry_type::cpu_freq_sample:

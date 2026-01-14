@@ -1046,28 +1046,30 @@ data::post_process(uint32_t _dev_id)
 void
 nic_data::post_process(size_t nic_index)
 {
-	using counter_track = perfetto_counter_track<nic_data>;
+    using counter_track = perfetto_counter_track<nic_data>;
+    std::string& nic = nic_data::nic_vec[nic_index];
 
-	auto addendum = [&](const char* _v) {
-		return JOIN(" ", "AI NIC", _v, JOIN("", '[', nic_index, ']'), "(S)");
-	};
+
+    auto addendum = [&](const char* _v) {
+        return JOIN(" ", nic, _v, JOIN("", '[', nic_index, ']'), "(S)");
+    };
 
     for(auto& itr : nic_sampler_vec[nic_index])
-	{
-	    uint64_t _ts               = itr.m_ts;
-	    uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
+    {
+        uint64_t _ts               = itr.m_ts;
+        uint32_t _rx_rdma_cnp_pkts = itr._rx_rdma_cnp_pkts;
 	    uint32_t _tx_rdma_cnp_pkts = itr._tx_rdma_cnp_pkts;
 	    uint32_t _rx_ucast_bytes   = itr._rx_ucast_bytes;
 	    uint32_t _tx_ucast_bytes   = itr._tx_ucast_bytes;
 	    uint32_t _rx_ucast_pkts    = itr._rx_ucast_pkts;
 	    uint32_t _tx_ucast_pkts    = itr._tx_ucast_pkts;
 
-        counter_track::emplace(nic_index, addendum("RX RDMA CNP PKTS"), "packets");
-		counter_track::emplace(nic_index, addendum("TX RDMA CNP PKTS"), "packets");
-        counter_track::emplace(nic_index, addendum("RX RDMA UCAST BYTES"), "bytes");
-		counter_track::emplace(nic_index, addendum("TX RDMA UCAST BYTES"), "bytes");
-        counter_track::emplace(nic_index, addendum("RX RDMA UCAST PKTS"), "packets");
-		counter_track::emplace(nic_index, addendum("TX RDMA UCAST PKTS"), "packets");
+        counter_track::emplace(nic_index, addendum("RX CNP PKTS"), "packets");
+		counter_track::emplace(nic_index, addendum("TX CNP PKTS"), "packets");
+        counter_track::emplace(nic_index, addendum("RX UCAST BYTES"), "bytes");
+		counter_track::emplace(nic_index, addendum("TX UCAST BYTES"), "bytes");
+        counter_track::emplace(nic_index, addendum("RX UCAST PKTS"), "packets");
+        counter_track::emplace(nic_index, addendum("TX UCAST PKTS"), "packets");
 
 		size_t track_index = 0;
 

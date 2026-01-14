@@ -196,10 +196,10 @@ using name = perfetto_category<Tp...>;
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic),                             \
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_rx_cnp),                      \
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_tx_cnp),                      \
-        ROCPROFSYS_PERFETTO_CATEGORY(category::nic_rx_ucast_bytes),                      \
-        ROCPROFSYS_PERFETTO_CATEGORY(category::nic_tx_ucast_bytes),                      \
-        ROCPROFSYS_PERFETTO_CATEGORY(category::nic_rx_ucast_pkts),                       \
-        ROCPROFSYS_PERFETTO_CATEGORY(category::nic_tx_ucast_pkts),                       \
+        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_rx_ucast_bytes),                      \
+        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_tx_ucast_bytes),                      \
+        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_rx_ucast_pkts),                       \
+        ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_nic_tx_ucast_pkts),                       \
         ROCPROFSYS_PERFETTO_CATEGORY(category::amd_smi_jpeg_activity),                   \
         ROCPROFSYS_PERFETTO_CATEGORY(category::rocm_rccl),                               \
         ROCPROFSYS_PERFETTO_CATEGORY(category::pthread),                                 \

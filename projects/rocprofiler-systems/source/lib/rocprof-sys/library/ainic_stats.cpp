@@ -75,7 +75,7 @@ void AINICStatsCollector::update_stats() {
                     // cout << "          port_num: " << (unsigned)rdma_port.port_num << endl;
                     // cout << "          state: " << rdma_port.state << endl;
 
-                    NICData& data;
+                    NICData data {};
                     data.name = rdma_dev.rdma_dev;
                     data.netdev = rdma_port.netdev;
 

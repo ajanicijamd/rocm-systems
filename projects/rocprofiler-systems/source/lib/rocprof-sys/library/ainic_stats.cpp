@@ -32,20 +32,6 @@ AINICStatsCollector::AINICStatsCollector() :
     _amdsmi(amd::smi::AMDSmiSystem::getInstance())
 { }
 
-NICData& AINICStatsCollector::get_data(const std::string& nic) {
-    // Check if nic maps to a data object, and if it does, return that object.
-    auto pair = _nic_params.find(nic);
-    if (pair != _nic_params.end()) {
-        return pair->second;
-    }
-    // nic doesn't map to a data object yet; create the mapping.
-    NICData data;
-    data.netdev = nic;
-    _nic_params[nic] = data;
-    pair = _nic_params.find(nic);
-    return pair->second;
-}
-
 bool AINICStatsCollector::find_nic(const std::string& nic, NICData& data) {
     auto pair = _nic_params.find(nic);
     if (pair == _nic_params.end())
@@ -56,7 +42,7 @@ bool AINICStatsCollector::find_nic(const std::string& nic, NICData& data) {
     return true;
 }
 
-void AINICStatsCollector::get_stats() {
+void AINICStatsCollector::update_stats() {
     amdsmi_status_t status;
     const std::vector<amdsmi_ai_nic_info_t>& ai_nic_infos(_amdsmi.get_ai_nic_info());
 
@@ -89,7 +75,7 @@ void AINICStatsCollector::get_stats() {
                     // cout << "          port_num: " << (unsigned)rdma_port.port_num << endl;
                     // cout << "          state: " << rdma_port.state << endl;
 
-                    NICData& data = get_data(rdma_port.netdev);
+                    NICData& data;
                     data.name = rdma_dev.rdma_dev;
                     data.netdev = rdma_port.netdev;
 
@@ -147,10 +133,70 @@ void AINICStatsCollector::get_stats() {
                         }
                     }
 
-                    _nic_params[data.netdev] = data;
+                    update_data_for_one_nic(data);
 
                 }
             }
         }
+    }
+}
+
+void AINICStatsCollector::update_data_for_one_nic(NICData& data)
+{
+    auto it = _nic_params.find(data.netdev);
+    if (it == _nic_params.end()) // not found
+    {
+        NICData new_delta;
+        new_delta.name = data.name;
+        new_delta.netdev = data.netdev;
+
+        new_delta.rx_rdma_ucast_bytes = 0;
+        new_delta.tx_rdma_ucast_bytes = 0;
+        new_delta.rx_rdma_ucast_pkts = 0;
+        new_delta.tx_rdma_ucast_pkts = 0;
+
+        new_delta.rx_rdma_cnp_pkts = 0;
+        new_delta.tx_rdma_cnp_pkts = 0;
+        _nic_params[data.netdev] = data;
+        _nic_delta_params[data.netdev] = new_delta;
+    }
+    else
+    {
+        NICData new_delta;
+        NICData& old_data = it->second;
+
+        new_delta.name = data.name;
+        new_delta.netdev = data.netdev;
+
+        new_delta.rx_rdma_ucast_bytes = data.rx_rdma_ucast_bytes - old_data.rx_rdma_ucast_bytes;
+        new_delta.tx_rdma_ucast_bytes = data.tx_rdma_ucast_bytes - old_data.tx_rdma_ucast_bytes;
+        new_delta.rx_rdma_ucast_pkts = data.rx_rdma_ucast_pkts - old_data.rx_rdma_ucast_pkts;
+        new_delta.tx_rdma_ucast_pkts = data.tx_rdma_ucast_pkts - old_data.tx_rdma_ucast_pkts;
+
+        new_delta.rx_rdma_cnp_pkts = data.rx_rdma_cnp_pkts - old_data.rx_rdma_cnp_pkts;
+        new_delta.tx_rdma_cnp_pkts = data.tx_rdma_cnp_pkts - old_data.tx_rdma_cnp_pkts;
+        _nic_params[data.netdev] = data;
+        _nic_delta_params[data.netdev] = new_delta;
+    }
+}
+
+void AINICStatsCollector::get_data(const std::string& nic, NICData& data) const
+{
+    auto it = _nic_delta_params.find(nic);
+    if (it == _nic_delta_params.end()) // not found
+    {
+        data.netdev = nic;
+        data.name = "";
+        data.rx_rdma_ucast_bytes = 0;
+        data.tx_rdma_ucast_bytes = 0;
+        data.rx_rdma_ucast_pkts = 0;
+        data.tx_rdma_ucast_pkts = 0;
+
+        data.rx_rdma_cnp_pkts = 0;
+        data.tx_rdma_cnp_pkts = 0;
+    }
+    else
+    {
+        data = it->second;
     }
 }

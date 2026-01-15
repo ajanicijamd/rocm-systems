@@ -651,7 +651,8 @@ data::sample(uint32_t _device_id)
 
 void nic_data::sample()
 {
-    auto& stats = nic_data::nic_stats_collector.get_data(_nic);
+    NICData stats;
+    nic_data::nic_stats_collector.get_data(_nic, stats);
     _rx_rdma_cnp_pkts = stats.rx_rdma_cnp_pkts;
     _tx_rdma_cnp_pkts = stats.tx_rdma_cnp_pkts;
     _rx_ucast_bytes = stats.rx_rdma_ucast_bytes;
@@ -725,7 +726,7 @@ config()
     }
 
     // Get AI NIC data for all NICs at once.
-    nic_data::nic_stats_collector.get_stats();
+    nic_data::nic_stats_collector.update_stats();
 
     for(uint32_t nic_index = 0; nic_index < nic_data::nic_vec.size(); ++nic_index)
     {
@@ -776,7 +777,7 @@ nic_sample()
     if(amd_smi::get_state() != State::Active) return;
 
     // Get AI NIC data for all NICs at once.
-    nic_data::nic_stats_collector.get_stats();
+    nic_data::nic_stats_collector.update_stats();
 
     for(uint32_t nic_index = 0; nic_index < nic_data::nic_vec.size(); ++nic_index)
     {
@@ -1120,8 +1121,8 @@ setup_ainic()
     auto _ainic_devices_v = get_sampling_ainics();
     nic_data::nic_vec = parse_list(_ainic_devices_v);
 
-    // Run get_stats() the first time, to get the names of all existing NICs.
-    nic_data::nic_stats_collector.get_stats();
+    // Run update_stats() the first time, to get the names of all existing NICs.
+    nic_data::nic_stats_collector.update_stats();
 
     nic_data::setup();
 

@@ -7,17 +7,17 @@
 #include <amd_smi/impl/amd_smi_system.h>
 
 struct NICData {
-    std::string name; // RDMA device name
-    std::string netdev; // NIC name
-    uint32_t num_stats {}; // Number of stats collected for this NIC
+    std::string _name; // RDMA device name
+    std::string _netdev; // NIC name
+    uint32_t _num_stats {}; // Number of stats collected for this NIC
 
-    std::uint32_t rx_rdma_ucast_bytes {}; // unicast received bytes
-    std::uint32_t rx_rdma_ucast_pkts {};  // unicast received packets
-    std::uint32_t tx_rdma_ucast_bytes {}; // unicast transmitted bytes
-    std::uint32_t tx_rdma_ucast_pkts {};  // unicast transmitted packets
+    std::uint32_t _rx_rdma_ucast_bytes {}; // unicast received bytes
+    std::uint32_t _rx_rdma_ucast_pkts {};  // unicast received packets
+    std::uint32_t _tx_rdma_ucast_bytes {}; // unicast transmitted bytes
+    std::uint32_t _tx_rdma_ucast_pkts {};  // unicast transmitted packets
 
-    std::uint32_t rx_rdma_cnp_pkts {}; // received CNP packets
-    std::uint32_t tx_rdma_cnp_pkts {}; // transmitted CNP packets
+    std::uint32_t _rx_rdma_cnp_pkts {}; // received CNP packets
+    std::uint32_t _tx_rdma_cnp_pkts {}; // transmitted CNP packets
 
     std::string to_string() const;
 
@@ -30,10 +30,9 @@ struct NICData {
     static const char* TX_RDMA_CNP_PKTS;
 };
 
-using nic_params_t = std::map<std::string, NICData>;
-
 class AINICStatsCollector {
-private:
+    using nic_params_t = std::map<std::string, NICData>;
+
     amd::smi::AMDSmiSystem& _amdsmi; // Reference to the singleton instance of AMDSmiSystem
 
     // _nic_params and _nic_delta_params both hold network stats. _nic_params holds the

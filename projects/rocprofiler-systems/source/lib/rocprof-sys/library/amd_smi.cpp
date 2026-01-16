@@ -653,18 +653,18 @@ void nic_data::sample()
 {
     NICData stats;
     nic_data::nic_stats_collector.get_data(_nic, stats);
-    _rx_rdma_cnp_pkts = stats.rx_rdma_cnp_pkts;
-    _tx_rdma_cnp_pkts = stats.tx_rdma_cnp_pkts;
-    _rx_ucast_bytes = stats.rx_rdma_ucast_bytes;
-    _tx_ucast_bytes = stats.tx_rdma_ucast_bytes;
-    _rx_ucast_pkts = stats.rx_rdma_ucast_pkts;
-    _tx_ucast_pkts = stats.tx_rdma_ucast_pkts;
+    _rx_rdma_cnp_pkts = stats._rx_rdma_cnp_pkts;
+    _tx_rdma_cnp_pkts = stats._tx_rdma_cnp_pkts;
+    _rx_ucast_bytes = stats._rx_rdma_ucast_bytes;
+    _tx_ucast_bytes = stats._tx_rdma_ucast_bytes;
+    _rx_ucast_pkts = stats._rx_rdma_ucast_pkts;
+    _tx_ucast_pkts = stats._tx_rdma_ucast_pkts;
 
     trace_cache::get_buffer_storage().store(
         trace_cache::entry_type::amd_smi_nic_sample, _nic_index,
-        stats.rx_rdma_cnp_pkts, stats.tx_rdma_cnp_pkts,
-        stats.rx_rdma_ucast_bytes, stats.tx_rdma_ucast_bytes,
-        stats.rx_rdma_ucast_pkts, stats.tx_rdma_ucast_pkts
+        stats._rx_rdma_cnp_pkts, stats._tx_rdma_cnp_pkts,
+        stats._rx_rdma_ucast_bytes, stats._tx_rdma_ucast_bytes,
+        stats._rx_rdma_ucast_pkts, stats._tx_rdma_ucast_pkts
     );
 }
 

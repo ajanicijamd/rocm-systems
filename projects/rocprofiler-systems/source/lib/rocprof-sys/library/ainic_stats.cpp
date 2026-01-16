@@ -5,14 +5,14 @@ std::string NICData::to_string() const {
     std::ostringstream stream;
 
     stream <<
-        "[name=" << name <<
-        ", netdev=" << netdev <<
-        ", rx_rdma_ucast_bytes=" << rx_rdma_ucast_bytes <<
-        ", rx_rdma_ucast_pkts="  << rx_rdma_ucast_pkts <<
-        ", tx_rdma_ucast_bytes=" << tx_rdma_ucast_bytes <<
-        ", tx_rdma_ucast_pkts="  << tx_rdma_ucast_pkts <<
-        ", rx_rdma_cnp_pkts=" << rx_rdma_cnp_pkts <<
-        ", tx_rdma_cnp_pkts=" << tx_rdma_cnp_pkts <<
+        "[_name=" << _name <<
+        ", _netdev=" << _netdev <<
+        ", _rx_rdma_ucast_bytes=" << _rx_rdma_ucast_bytes <<
+        ", _rx_rdma_ucast_pkts="  << _rx_rdma_ucast_pkts <<
+        ", _tx_rdma_ucast_bytes=" << _tx_rdma_ucast_bytes <<
+        ", _tx_rdma_ucast_pkts="  << _tx_rdma_ucast_pkts <<
+        ", _rx_rdma_cnp_pkts=" << _rx_rdma_cnp_pkts <<
+        ", _tx_rdma_cnp_pkts=" << _tx_rdma_cnp_pkts <<
         "]";
     return stream.str();
 }
@@ -24,7 +24,7 @@ const char* NICData::TX_RDMA_UCAST_PKTS = "tx_rdma_ucast_pkts";
 const char* NICData::RX_RDMA_CNP_PKTS = "rx_rdma_cnp_pkts";
 const char* NICData::TX_RDMA_CNP_PKTS = "tx_rdma_cnp_pkts";
 
-const nic_params_t& AINICStatsCollector::params() {
+const AINICStatsCollector::nic_params_t& AINICStatsCollector::params() {
     return _nic_params;
 }
 
@@ -63,8 +63,8 @@ void AINICStatsCollector::update_stats() {
                     auto& rdma_port = rdma_dev.rdma_port_info[rdma_port_idx];
 
                     NICData data {};
-                    data.name = rdma_dev.rdma_dev;
-                    data.netdev = rdma_port.netdev;
+                    data._name = rdma_dev.rdma_dev;
+                    data._netdev = rdma_port.netdev;
 
                     amdsmi_processor_handle processor_handle {};
 
@@ -78,39 +78,39 @@ void AINICStatsCollector::update_stats() {
                     std::unique_ptr<amdsmi_nic_stat_t[]> stats;
 
                     // Call *_statistics the first time to get the number of statistics.
-                    if (data.num_stats == 0) {
+                    if (data._num_stats == 0) {
                         amdsmi_get_nic_rdma_port_statistics(
                             processor_handle,
                             rdma_port_idx,
-                            &data.num_stats,
+                            &data._num_stats,
                             nullptr
                         );
                     }
 
                     // Allocate stats.
-                    stats = std::make_unique<amdsmi_nic_stat_t[]>(data.num_stats);
+                    stats = std::make_unique<amdsmi_nic_stat_t[]>(data._num_stats);
 
                     // Call *_statistics the second time to get the statistics.
                     amdsmi_get_nic_rdma_port_statistics(
                         processor_handle,
                         rdma_port_idx,
-                        &data.num_stats,
+                        &data._num_stats,
                         stats.get()
                     );
 
-                    for (uint32_t stat_idx{}; stat_idx < data.num_stats; ++stat_idx) {
+                    for (uint32_t stat_idx{}; stat_idx < data._num_stats; ++stat_idx) {
                         if (strcmp(stats[stat_idx].name, NICData::RX_RDMA_UCAST_BYTES) == 0) {
-                            data.rx_rdma_ucast_bytes = static_cast<std::uint32_t>(stats[stat_idx].value);
+                            data._rx_rdma_ucast_bytes = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::RX_RDMA_UCAST_PKTS) == 0) {
-                            data.rx_rdma_ucast_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
+                            data._rx_rdma_ucast_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::TX_RDMA_UCAST_BYTES) == 0) {
-                            data.tx_rdma_ucast_bytes = static_cast<std::uint32_t>(stats[stat_idx].value);
+                            data._tx_rdma_ucast_bytes = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::TX_RDMA_UCAST_PKTS) == 0) {
-                            data.tx_rdma_ucast_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
+                            data._tx_rdma_ucast_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::RX_RDMA_CNP_PKTS) == 0) {
-                            data.rx_rdma_cnp_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
+                            data._rx_rdma_cnp_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::TX_RDMA_CNP_PKTS) == 0) {
-                            data.tx_rdma_cnp_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
+                            data._tx_rdma_cnp_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         }
                     }
 
@@ -124,40 +124,40 @@ void AINICStatsCollector::update_stats() {
 
 void AINICStatsCollector::update_data_for_one_nic(NICData& data)
 {
-    auto it = _nic_params.find(data.netdev);
+    auto it = _nic_params.find(data._netdev);
     if (it == _nic_params.end()) // not found
     {
         NICData new_delta;
-        new_delta.name = data.name;
-        new_delta.netdev = data.netdev;
+        new_delta._name = data._name;
+        new_delta._netdev = data._netdev;
 
-        new_delta.rx_rdma_ucast_bytes = 0;
-        new_delta.tx_rdma_ucast_bytes = 0;
-        new_delta.rx_rdma_ucast_pkts = 0;
-        new_delta.tx_rdma_ucast_pkts = 0;
+        new_delta._rx_rdma_ucast_bytes = 0;
+        new_delta._tx_rdma_ucast_bytes = 0;
+        new_delta._rx_rdma_ucast_pkts = 0;
+        new_delta._tx_rdma_ucast_pkts = 0;
 
-        new_delta.rx_rdma_cnp_pkts = 0;
-        new_delta.tx_rdma_cnp_pkts = 0;
-        _nic_params[data.netdev] = data;
-        _nic_delta_params[data.netdev] = new_delta;
+        new_delta._rx_rdma_cnp_pkts = 0;
+        new_delta._tx_rdma_cnp_pkts = 0;
+        _nic_params[data._netdev] = data;
+        _nic_delta_params[data._netdev] = new_delta;
     }
     else
     {
         NICData new_delta;
         NICData& old_data = it->second;
 
-        new_delta.name = data.name;
-        new_delta.netdev = data.netdev;
+        new_delta._name = data._name;
+        new_delta._netdev = data._netdev;
 
-        new_delta.rx_rdma_ucast_bytes = data.rx_rdma_ucast_bytes - old_data.rx_rdma_ucast_bytes;
-        new_delta.tx_rdma_ucast_bytes = data.tx_rdma_ucast_bytes - old_data.tx_rdma_ucast_bytes;
-        new_delta.rx_rdma_ucast_pkts = data.rx_rdma_ucast_pkts - old_data.rx_rdma_ucast_pkts;
-        new_delta.tx_rdma_ucast_pkts = data.tx_rdma_ucast_pkts - old_data.tx_rdma_ucast_pkts;
+        new_delta._rx_rdma_ucast_bytes = data._rx_rdma_ucast_bytes - old_data._rx_rdma_ucast_bytes;
+        new_delta._tx_rdma_ucast_bytes = data._tx_rdma_ucast_bytes - old_data._tx_rdma_ucast_bytes;
+        new_delta._rx_rdma_ucast_pkts = data._rx_rdma_ucast_pkts - old_data._rx_rdma_ucast_pkts;
+        new_delta._tx_rdma_ucast_pkts = data._tx_rdma_ucast_pkts - old_data._tx_rdma_ucast_pkts;
 
-        new_delta.rx_rdma_cnp_pkts = data.rx_rdma_cnp_pkts - old_data.rx_rdma_cnp_pkts;
-        new_delta.tx_rdma_cnp_pkts = data.tx_rdma_cnp_pkts - old_data.tx_rdma_cnp_pkts;
-        _nic_params[data.netdev] = data;
-        _nic_delta_params[data.netdev] = new_delta;
+        new_delta._rx_rdma_cnp_pkts = data._rx_rdma_cnp_pkts - old_data._rx_rdma_cnp_pkts;
+        new_delta._tx_rdma_cnp_pkts = data._tx_rdma_cnp_pkts - old_data._tx_rdma_cnp_pkts;
+        _nic_params[data._netdev] = data;
+        _nic_delta_params[data._netdev] = new_delta;
     }
 }
 
@@ -166,15 +166,15 @@ void AINICStatsCollector::get_data(const std::string& nic, NICData& data) const
     auto it = _nic_delta_params.find(nic);
     if (it == _nic_delta_params.end()) // not found
     {
-        data.netdev = nic;
-        data.name = "";
-        data.rx_rdma_ucast_bytes = 0;
-        data.tx_rdma_ucast_bytes = 0;
-        data.rx_rdma_ucast_pkts = 0;
-        data.tx_rdma_ucast_pkts = 0;
+        data._netdev = nic;
+        data._name = "";
+        data._rx_rdma_ucast_bytes = 0;
+        data._tx_rdma_ucast_bytes = 0;
+        data._rx_rdma_ucast_pkts = 0;
+        data._tx_rdma_ucast_pkts = 0;
 
-        data.rx_rdma_cnp_pkts = 0;
-        data.tx_rdma_cnp_pkts = 0;
+        data._rx_rdma_cnp_pkts = 0;
+        data._tx_rdma_cnp_pkts = 0;
     }
     else
     {

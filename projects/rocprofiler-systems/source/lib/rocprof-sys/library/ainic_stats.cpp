@@ -47,33 +47,20 @@ void AINICStatsCollector::update_stats() {
     const std::vector<amdsmi_ai_nic_info_t>& ai_nic_infos(_amdsmi.get_ai_nic_info());
 
     auto size = ai_nic_infos.size();
-    // cout << "Number of NICs: " << size << endl;
 
     for (unsigned nic_index {}; nic_index < size; ++nic_index) {
         auto& ai_nic_info = ai_nic_infos[nic_index];
-        // cout << "NIC #" << nic_index << endl;
-
-        // cout << "number of ports: " << ai_nic_info.num_ports << endl;
 
         for (unsigned port_idx {}; port_idx < ai_nic_info.num_ports; ++port_idx) {
-            // cout << "  port #" << port_idx << endl;
             auto& port = ai_nic_info.port[port_idx];
             unsigned num_rdma_devs = port.num_rdma_dev;
-            // cout << "  number of RDMA devices: " << num_rdma_devs << endl;
 
             for (unsigned rdma_dev_idx {}; rdma_dev_idx < num_rdma_devs; ++rdma_dev_idx) {
-                // cout << "    RDMA device #" << rdma_dev_idx << endl;
                 auto& rdma_dev = port.rdma_dev[rdma_dev_idx];
-                // cout << "      name: " << rdma_dev.rdma_dev << endl;
                 unsigned num_ports = rdma_dev.rdma_port;
-                // cout << "      number of ports: " << num_ports << endl;
 
                 for (unsigned rdma_port_idx {}; rdma_port_idx < num_ports; ++rdma_port_idx) {
-                    // cout << "        port #" << rdma_port_idx << endl;
                     auto& rdma_port = rdma_dev.rdma_port_info[rdma_port_idx];
-                    // cout << "          netdev: " << rdma_port.netdev << endl;
-                    // cout << "          port_num: " << (unsigned)rdma_port.port_num << endl;
-                    // cout << "          state: " << rdma_port.state << endl;
 
                     NICData data {};
                     data.name = rdma_dev.rdma_dev;
@@ -113,22 +100,16 @@ void AINICStatsCollector::update_stats() {
 
                     for (uint32_t stat_idx{}; stat_idx < data.num_stats; ++stat_idx) {
                         if (strcmp(stats[stat_idx].name, NICData::RX_RDMA_UCAST_BYTES) == 0) {
-                            // cout << "Setting " << NICData::RX_RDMA_UCAST_BYTES << endl;
                             data.rx_rdma_ucast_bytes = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::RX_RDMA_UCAST_PKTS) == 0) {
-                            // cout << "Setting " << NICData::RX_RDMA_UCAST_PKTS << endl;
                             data.rx_rdma_ucast_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::TX_RDMA_UCAST_BYTES) == 0) {
-                            // cout << "Setting " << NICData::TX_RDMA_UCAST_BYTES << endl;
                             data.tx_rdma_ucast_bytes = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::TX_RDMA_UCAST_PKTS) == 0) {
-                            // cout << "Setting " << NICData::TX_RDMA_UCAST_PKTS << endl;
                             data.tx_rdma_ucast_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::RX_RDMA_CNP_PKTS) == 0) {
-                            // cout << "Setting " << NICData::RX_RDMA_CNP_PKTS << endl;
                             data.rx_rdma_cnp_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         } else if (strcmp(stats[stat_idx].name, NICData::TX_RDMA_CNP_PKTS) == 0) {
-                            // cout << "Setting " << NICData::TX_RDMA_CNP_PKTS << endl;
                             data.tx_rdma_cnp_pkts = static_cast<std::uint32_t>(stats[stat_idx].value);
                         }
                     }
